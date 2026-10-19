@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Scheduled daily HTML report at 18:00 local time via launchd StartCalendarInterval.
+  Requires the local server to be running (or use the accompanying script that boots briefly).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.macactivitytracker.dailyreport</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/curl</string>
+    <string>-s</string>
+    <string>-X</string>
+    <string>POST</string>
+    <string>-H</string>
+    <string>Content-Type: application/json</string>
+    <string>-d</string>
+    <string>{}</string>
+    <string>http://127.0.0.1:8787/api/reports/daily</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>18</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/tmp/macactivitytracker-report.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/macactivitytracker-report.err</string>
+</dict>
+</plist>

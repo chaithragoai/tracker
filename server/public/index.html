@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mac Activity Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="sidebar-brand">
+        <div class="logo-mark" aria-hidden="true"></div>
+        <div>
+          <div class="brand-name">Activity Assistant</div>
+          <div class="brand-sub">Local-first</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <button type="button" class="nav-item active" data-view="overview">Overview</button>
+        <button type="button" class="nav-item" data-view="apps">App Usage</button>
+        <button type="button" class="nav-item" data-view="browser">Browser Activity</button>
+        <button type="button" class="nav-item" data-view="timeline">Timeline</button>
+        <button type="button" class="nav-item" data-view="search">Search</button>
+        <button type="button" class="nav-item" data-view="assistant">Assistant</button>
+        <button type="button" class="nav-item" data-view="briefing">Daily Briefing</button>
+        <button type="button" class="nav-item" data-view="tasks">Tasks</button>
+        <button type="button" class="nav-item" data-view="memories">Memories</button>
+        <button type="button" class="nav-item" data-view="history">Activity History</button>
+        <button type="button" class="nav-item" data-view="reports">Reports &amp; Privacy</button>
+        <button type="button" class="nav-item" data-view="manager">Manager</button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="live-now">
+          <div class="muted tiny">Tracking health</div>
+          <div id="health-line" class="now-line">—</div>
+          <div class="muted tiny" style="margin-top:0.5rem">Now</div>
+          <div id="current-app" class="now-line">—</div>
+          <div id="current-tab" class="now-line muted tiny">—</div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main-col">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 id="view-title">Overview</h1>
+          <p id="range-label" class="muted tiny">Loading range…</p>
+        </div>
+        <div class="topbar-right">
+          <div class="range-presets" role="group" aria-label="Date range">
+            <button type="button" class="chip active" data-range="today">Today</button>
+            <button type="button" class="chip" data-range="yesterday">Yesterday</button>
+            <button type="button" class="chip" data-range="7d">Last 7 Days</button>
+            <button type="button" class="chip" data-range="custom">Custom</button>
+          </div>
+          <div id="custom-range" class="custom-range hidden">
+            <label class="sr-only" for="from-date">From</label>
+            <input type="date" id="from-date" />
+            <span class="muted">to</span>
+            <label class="sr-only" for="to-date">To</label>
+            <input type="date" id="to-date" />
+            <button type="button" id="btn-apply-custom" class="btn">Apply</button>
+          </div>
+          <button type="button" id="btn-refresh" class="btn btn-ghost" title="Refresh">Refresh</button>
+          <div id="status-pill" class="pill">loading…</div>
+        </div>
+      </header>
+
+      <main>
+        <!-- OVERVIEW -->
+        <section id="view-overview" class="view active">
+          <div id="open-session-note" class="banner hidden" role="status"></div>
+          <div class="cards" id="summary-cards">
+            <article class="card metric">
+              <div class="metric-label">Tracked app time</div>
+              <div class="metric-value" id="metric-total-app">—</div>
+              <div class="metric-hint muted tiny">From application sessions</div>
+            </article>
+            <article class="card metric">
+              <div class="metric-label">Browser time</div>
+              <div class="metric-value" id="metric-browser">—</div>
+              <div class="metric-hint muted tiny">From tab sessions (separate)</div>
+            </article>
+            <article class="card metric">
+              <div class="metric-label">Top application</div>
+              <div class="metric-value sm" id="metric-top-app">—</div>
+              <div class="metric-hint muted tiny" id="metric-top-app-time"></div>
+            </article>
+            <article class="card metric">
+              <div class="metric-label">Apps used</div>
+              <div class="metric-value" id="metric-app-count">—</div>
+              <div class="metric-hint muted tiny" id="metric-site-count"></div>
+            </article>
+          </div>
+
+          <div class="grid-2">
+            <article class="card chart-card">
+              <div class="card-head">
+                <h2>Application usage</h2>
+                <p class="muted tiny">Share of tracked app time in this range</p>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chart-apps" aria-label="Application usage donut chart"></canvas>
+                <div id="chart-apps-center" class="donut-center" aria-hidden="true"></div>
+                <div id="empty-apps" class="empty-state hidden">No application sessions in this range.</div>
+              </div>
+            </article>
+            <article class="card chart-card">
+              <div class="card-head">
+                <h2>Website usage</h2>
+                <p class="muted tiny">Share of browser tab time (not added to app time)</p>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chart-sites" aria-label="Website usage donut chart"></canvas>
+                <div id="chart-sites-center" class="donut-center" aria-hidden="true"></div>
+                <div id="empty-sites" class="empty-state hidden">No website sessions in this range.</div>
+              </div>
+            </article>
+          </div>
+
+          <div class="grid-2">
+            <article class="card chart-card">
+              <div class="card-head">
+                <h2>Activity categories</h2>
+                <p class="muted tiny">Heuristic from app name/bundle — unknown stays Other</p>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chart-categories" aria-label="Category donut chart"></canvas>
+                <div id="empty-categories" class="empty-state hidden">No categorized app time yet.</div>
+              </div>
+            </article>
+            <article class="card chart-card">
+              <div class="card-head">
+                <h2>Usage over time</h2>
+                <p class="muted tiny" id="timeline-mode-label">App activity by hour</p>
+              </div>
+              <div class="chart-wrap tall">
+                <canvas id="chart-timeline" aria-label="Usage over time chart"></canvas>
+                <div id="empty-timeline" class="empty-state hidden">No timed activity in this range.</div>
+              </div>
+            </article>
+          </div>
+
+          <div class="grid-2">
+            <article class="card">
+              <div class="card-head"><h2>Top applications</h2></div>
+              <div id="top-apps" class="rank-list"></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><h2>Top websites</h2></div>
+              <div id="top-sites" class="rank-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- APPS -->
+        <section id="view-apps" class="view">
+          <article class="card chart-card">
+            <div class="card-head">
+              <h2>Application time</h2>
+              <p class="muted tiny">Donut + ranked list from app_sessions</p>
+            </div>
+            <div class="split">
+              <div class="chart-wrap">
+                <canvas id="chart-apps-lg" aria-label="Large application usage chart"></canvas>
+                <div id="empty-apps-lg" class="empty-state hidden">No application sessions in this range.</div>
+              </div>
+              <div id="apps-detail" class="rank-list"></div>
+            </div>
+          </article>
+        </section>
+
+        <!-- BROWSER -->
+        <section id="view-browser" class="view">
+          <article class="card chart-card">
+            <div class="card-head">
+              <h2>Website time</h2>
+              <p class="muted tiny">From Chrome tab sessions only</p>
+            </div>
+            <div class="split">
+              <div class="chart-wrap">
+                <canvas id="chart-sites-lg" aria-label="Large website usage chart"></canvas>
+                <div id="empty-sites-lg" class="empty-state hidden">No website sessions in this range.</div>
+              </div>
+              <div id="sites-detail" class="rank-list"></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-head"><h2>Browser operations</h2></div>
+            <div id="ops-list" class="list"></div>
+          </article>
+        </section>
+
+        <!-- TIMELINE -->
+        <section id="view-timeline" class="view">
+          <article class="card">
+            <div class="card-head">
+              <h2>Session timeline</h2>
+              <p class="muted tiny">Application sessions overlapping the selected range</p>
+            </div>
+            <div id="timeline" class="list"></div>
+          </article>
+          <div class="grid-2">
+            <article class="card">
+              <div class="card-head"><h2>Idle periods</h2></div>
+              <div id="idle-list" class="list"></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><h2>Errors &amp; gaps</h2></div>
+              <div id="gaps-list" class="list"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- SEARCH -->
+        <section id="view-search" class="view">
+          <article class="card">
+            <div class="card-head">
+              <h2>Universal activity search</h2>
+              <p class="muted tiny">Searches recorded events, tab sessions, memories and tasks — not passwords or page contents.</p>
+            </div>
+            <div class="filters inline">
+              <label style="flex:1">Query <input type="search" id="search-q" placeholder="app, domain, title…" /></label>
+              <button type="button" id="btn-search" class="btn btn-primary">Search</button>
+            </div>
+            <div id="search-results" class="list" style="margin-top:1rem"></div>
+          </article>
+        </section>
+
+        <!-- ASSISTANT -->
+        <section id="view-assistant" class="view">
+          <article class="card">
+            <div class="card-head">
+              <h2>Activity assistant</h2>
+              <p class="muted tiny">Answers from your local database only. No cloud AI unless you later enable it with consent.</p>
+            </div>
+            <div class="filters inline">
+              <label style="flex:1">Question
+                <input type="text" id="ask-q" placeholder="What did I do today? / Give me a daily work report" />
+              </label>
+              <button type="button" id="btn-ask" class="btn btn-primary">Ask</button>
+            </div>
+            <div id="ask-answer" class="row" style="margin-top:1rem">
+              <div class="meta">Ask about apps, websites, work tasks, errors, testing, or say “daily work report”.</div>
+            </div>
+            <div id="ask-meta" class="list" style="margin-top:0.75rem"></div>
+          </article>
+        </section>
+
+        <!-- BRIEFING / WORK UNDERSTANDING -->
+        <section id="view-briefing" class="view">
+          <div class="briefing-dash">
+            <article class="card briefing-hero">
+              <div class="card-head briefing-hero-head">
+                <div>
+                  <h2>Daily briefing</h2>
+                  <p class="muted tiny">A clear view of the kinds of work detected from your tracked activity. Outcomes stay uncertain until you confirm them.</p>
+                  <p id="briefing-day-label" class="briefing-day-label muted tiny">Select a date range above, then generate a report.</p>
+                </div>
+                <div class="actions briefing-actions">
+                  <button type="button" id="btn-work-report" class="btn btn-primary">Generate work report</button>
+                  <button type="button" id="btn-work-rebuild" class="btn">Rebuild groups</button>
+                  <button type="button" id="btn-briefing" class="btn btn-ghost">Usage totals</button>
+                </div>
+              </div>
+              <p id="work-msg" class="briefing-status muted tiny" role="status"></p>
+            </article>
+
+            <div id="briefing-metrics" class="cards briefing-metrics" aria-live="polite">
+              <article class="card metric briefing-metric">
+                <div class="metric-icon" aria-hidden="true">A</div>
+                <div class="metric-label">Total active time</div>
+                <div class="metric-value">—</div>
+              </article>
+              <article class="card metric briefing-metric">
+                <div class="metric-icon teal" aria-hidden="true">W</div>
+                <div class="metric-label">Estimated work time</div>
+                <div class="metric-value">—</div>
+              </article>
+              <article class="card metric briefing-metric">
+                <div class="metric-icon" aria-hidden="true">B</div>
+                <div class="metric-label">Browser activity</div>
+                <div class="metric-value">—</div>
+              </article>
+              <article class="card metric briefing-metric">
+                <div class="metric-icon warn" aria-hidden="true">I</div>
+                <div class="metric-label">Idle time</div>
+                <div class="metric-value">—</div>
+              </article>
+              <article class="card metric briefing-metric">
+                <div class="metric-icon ok" aria-hidden="true">#</div>
+                <div class="metric-label">Work activities</div>
+                <div class="metric-value">—</div>
+              </article>
+            </div>
+
+            <article class="card" id="work-summary-section">
+              <div class="card-head">
+                <h2>Overall work summary</h2>
+                <p class="muted tiny">Confirmed notes vs inferred activity types</p>
+              </div>
+              <div id="work-report-out" class="briefing-summary-panel">
+                <div class="briefing-empty">Generate a work report to see today’s summary.</div>
+              </div>
+            </article>
+
+            <div id="briefing-health-banner" class="banner hidden" role="status"></div>
+
+            <article class="card">
+              <div class="card-head">
+                <h2>Identified work</h2>
+                <p class="muted tiny">Automatically grouped from apps, window context, and engaged websites</p>
+              </div>
+              <div id="work-timeline" class="work-activity-list">
+                <div class="briefing-empty">Generate a work report to see identified tasks.</div>
+              </div>
+            </article>
+
+            <details class="card work-unidentified-details" id="work-unidentified-wrap">
+              <summary>
+                Could not identify
+                <span id="work-unidentified-summary" class="muted tiny"> — none</span>
+              </summary>
+              <p class="muted tiny" style="margin:0.5rem 0 0.75rem">
+                These blocks had tracked time but not enough context to name the task. Notes are optional.
+              </p>
+              <div id="work-needs-confirm" class="work-needs-list">
+                <div class="briefing-empty">Nothing in this section.</div>
+              </div>
+            </details>
+
+            <article class="card">
+              <div class="card-head">
+                <h2>Day timeline</h2>
+                <p class="muted tiny">Chronological order — easy to scan</p>
+              </div>
+              <div id="work-chrono" class="work-chrono">
+                <div class="briefing-empty">Timeline appears after you generate a report.</div>
+              </div>
+            </article>
+
+            <details class="card briefing-usage-details">
+              <summary>Usage briefing <span class="muted tiny">(app &amp; browser totals)</span></summary>
+              <div id="briefing-out" class="list briefing-usage-out">
+                <div class="briefing-empty">Click “Usage totals” to load recorded app and browser time.</div>
+              </div>
+            </details>
+
+            <article class="card">
+              <div class="card-head">
+                <h2>Add a work note</h2>
+                <p class="muted tiny">Notes mark outcomes as confirmed. You can also add a note on an activity card.</p>
+              </div>
+              <div class="filters inline">
+                <label style="flex:1">What did you accomplish?
+                  <input type="text" id="work-note-body" placeholder="e.g. Fixed duration bug and re-tested the report" />
+                </label>
+                <button type="button" id="btn-work-note" class="btn btn-primary">Save note</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- TASKS -->
+        <section id="view-tasks" class="view">
+          <article class="card">
+            <div class="card-head"><h2>Tasks</h2></div>
+            <div class="filters inline">
+              <label style="flex:1">New task <input type="text" id="task-title" placeholder="Title" /></label>
+              <button type="button" id="btn-task-add" class="btn btn-primary">Add</button>
+              <button type="button" id="btn-task-suggest" class="btn">Suggest from today</button>
+            </div>
+            <p class="muted tiny">AI suggestions stay unconfirmed until you accept them.</p>
+            <div id="task-list" class="list" style="margin-top:1rem"></div>
+            <div id="task-suggestions" class="list" style="margin-top:1rem"></div>
+          </article>
+        </section>
+
+        <!-- MEMORIES -->
+        <section id="view-memories" class="view">
+          <article class="card">
+            <div class="card-head">
+              <h2>Memories &amp; projects</h2>
+              <p class="muted tiny">Curated notes — separate from raw tracking events.</p>
+            </div>
+            <div class="filters inline">
+              <label>Title <input type="text" id="mem-title" /></label>
+              <label style="flex:1">Note <input type="text" id="mem-body" /></label>
+              <button type="button" id="btn-mem-add" class="btn btn-primary">Save memory</button>
+            </div>
+            <div class="filters inline" style="margin-top:0.75rem">
+              <label>Project name <input type="text" id="proj-name" /></label>
+              <button type="button" id="btn-proj-add" class="btn">Add project</button>
+            </div>
+            <div class="grid-2" style="margin-top:1rem">
+              <div id="mem-list" class="list"></div>
+              <div id="proj-list" class="list"></div>
+            </div>
+          </article>
+        </section>
+
+        <!-- HISTORY -->
+        <section id="view-history" class="view">
+          <article class="card">
+            <div class="card-head">
+              <h2>Activity history</h2>
+              <div class="filters inline">
+                <label>App/bundle <input type="text" id="filter-bundle" placeholder="com.apple.finder" /></label>
+                <label>Search <input type="text" id="filter-q" placeholder="type or app" /></label>
+                <label>Operation
+                  <select id="filter-type">
+                    <option value="">All types</option>
+                    <option>sessionStarted</option>
+                    <option>sessionEnded</option>
+                    <option>tabSessionStarted</option>
+                    <option>tabSessionEnded</option>
+                    <option>click</option>
+                    <option>search</option>
+                    <option>formSubmit</option>
+                    <option>navigation</option>
+                    <option>download</option>
+                    <option>idleStarted</option>
+                    <option>idleEnded</option>
+                    <option>gapDetected</option>
+                    <option>error</option>
+                  </select>
+                </label>
+                <button type="button" id="btn-apply" class="btn">Apply</button>
+              </div>
+            </div>
+            <div id="events" class="list"></div>
+          </article>
+        </section>
+
+        <!-- MANAGER -->
+        <section id="view-manager" class="view">
+          <div id="manager-error" class="banner hidden" role="alert"></div>
+          <div class="cards" id="manager-summary-cards">
+            <article class="card metric">
+              <div class="metric-label">Enrolled devices</div>
+              <div class="metric-value" id="mgr-total">—</div>
+              <div class="metric-hint muted tiny">Active enrollments</div>
+            </article>
+            <article class="card metric">
+              <div class="metric-label">Online</div>
+              <div class="metric-value" id="mgr-online">—</div>
+              <div class="metric-hint muted tiny">Recent authenticated check-in</div>
+            </article>
+            <article class="card metric">
+              <div class="metric-label">Activity stale</div>
+              <div class="metric-value" id="mgr-activity-stale">—</div>
+              <div class="metric-hint muted tiny">Reachable, no recent activity</div>
+            </article>
+            <article class="card metric">
+              <div class="metric-label">Needs attention</div>
+              <div class="metric-value" id="mgr-attention">—</div>
+              <div class="metric-hint muted tiny">Offline, stale check-in, or revoked</div>
+            </article>
+          </div>
+
+          <article class="card" id="manager-list-card">
+            <div class="card-head">
+              <h2>Devices</h2>
+              <p class="muted tiny" id="manager-threshold-note">Connectivity uses check-in age; idle is not offline.</p>
+            </div>
+            <div class="filters inline manager-filters">
+              <label>Search <input type="search" id="mgr-q" placeholder="name, OS, employee…" /></label>
+              <label>Status
+                <select id="mgr-status">
+                  <option value="">All</option>
+                  <option value="online">Online</option>
+                  <option value="activity_stale">Activity stale</option>
+                  <option value="stale_checkin">Stale check-in</option>
+                  <option value="offline">Offline</option>
+                  <option value="needs_attention">Needs attention</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </label>
+              <label>Sort
+                <select id="mgr-sort">
+                  <option value="last_check_in_at">Last check-in</option>
+                  <option value="display_name">Name</option>
+                  <option value="status">Status</option>
+                  <option value="tracked_seconds_in_range">Tracked time</option>
+                </select>
+              </label>
+              <button type="button" id="btn-mgr-refresh" class="btn">Refresh</button>
+            </div>
+            <div id="manager-loading" class="muted tiny hidden">Loading devices…</div>
+            <div id="manager-empty" class="empty-state hidden">No enrolled devices yet. Run scripts/enroll-local-device.sh or start the server in local mode.</div>
+            <div class="table-wrap">
+              <table class="data-table" id="manager-table">
+                <thead>
+                  <tr>
+                    <th>Device</th>
+                    <th>OS</th>
+                    <th>Employee</th>
+                    <th>Status</th>
+                    <th>Last check-in</th>
+                    <th>Last Mac</th>
+                    <th>Last Chrome</th>
+                    <th>Tracked (range)</th>
+                  </tr>
+                </thead>
+                <tbody id="manager-tbody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card hidden" id="manager-detail-card">
+            <div class="card-head">
+              <h2 id="manager-detail-title">Device detail</h2>
+              <button type="button" id="btn-mgr-back" class="btn btn-ghost">Back to list</button>
+            </div>
+            <div id="manager-detail-meta" class="manager-detail-meta muted tiny"></div>
+            <div class="grid-2" style="margin-top:1rem">
+              <div>
+                <h3>Applications</h3>
+                <div id="manager-detail-apps" class="list"></div>
+              </div>
+              <div>
+                <h3>Websites</h3>
+                <div id="manager-detail-sites" class="list"></div>
+              </div>
+            </div>
+            <h3>Recent events</h3>
+            <div id="manager-detail-events" class="list"></div>
+            <h3>Gaps &amp; errors</h3>
+            <div id="manager-detail-issues" class="list"></div>
+          </article>
+        </section>
+
+        <!-- REPORTS -->
+        <section id="view-reports" class="view">
+          <article class="card">
+            <div class="card-head"><h2>Reports &amp; export</h2></div>
+            <div class="actions">
+              <button type="button" id="btn-html" class="btn btn-primary">Generate daily HTML report</button>
+              <a class="btn button-link" id="btn-csv" href="/api/export/csv">Download CSV</a>
+              <a class="btn button-link" id="btn-json" href="/api/export/json">Download JSON</a>
+              <button type="button" id="btn-backup" class="btn">Backup database</button>
+            </div>
+            <p class="muted tiny">Screen Rewind and meeting audio are <strong>not enabled</strong>. See docs for investigation notes — they stay off by default and need your explicit approval.</p>
+            <p id="weekly" class="muted"></p>
+            <p id="reports-msg" class="muted" role="status" aria-live="polite"></p>
+          </article>
+          <article class="card">
+            <div class="card-head"><h2>Privacy controls</h2></div>
+            <div class="privacy">
+              <label class="check"><input type="checkbox" id="ai-consent" /> I consent to optional local AI summaries (off by default; no cloud)</label>
+              <label class="check"><input type="checkbox" id="ai-enabled" disabled /> Enable AI summaries</label>
+              <label>Excluded domains (comma-separated)
+                <input type="text" id="excluded-domains" placeholder="mail.google.com, bank.example" />
+              </label>
+              <label>Excluded app bundle IDs (comma-separated)
+                <input type="text" id="excluded-bundles" placeholder="com.apple.Passwords" />
+              </label>
+              <div class="actions">
+                <button type="button" id="btn-save-settings" class="btn btn-primary">Save privacy settings</button>
+                <button type="button" id="btn-pause" class="btn">Pause tracking flag</button>
+              </div>
+              <p id="settings-msg" class="muted"></p>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="/vendor/chart.umd.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

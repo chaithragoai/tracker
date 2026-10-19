@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tracker</title>
+  <style>
+    body { font-family: "IBM Plex Sans", system-ui, sans-serif; margin: 12px; width: 280px; color: #142033; }
+    h1 { font-size: 14px; margin: 0 0 8px; }
+    button { width: 100%; padding: 8px; margin-top: 8px; cursor: pointer; }
+    .status { font-size: 12px; color: #445; margin-top: 4px; }
+    .status.ok { color: #0a7a45; }
+    .status.bad { color: #b42318; }
+    code { font-size: 10px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Mac Activity Tracker</h1>
+  <div class="status" id="status">Checking…</div>
+  <div class="status" id="connection">Checking server…</div>
+  <div class="status" id="device">Device: …</div>
+  <button id="toggle">Pause / Resume</button>
+  <button id="syncCreds">Sync local device credentials</button>
+  <button id="openDash">Open dashboard</button>
+  <script src="popup.js"></script>
+</body>
+</html>

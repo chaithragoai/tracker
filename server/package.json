@@ -1,0 +1,19 @@
+{
+  "name": "mac-activity-tracker-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local SQLite API, dashboard, and reports for Mac Activity Tracker",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/events.test.js test/reports.test.js test/analytics.test.js test/migration-health.test.js test/assistant.test.js test/devices.test.js test/manager.test.js test/workUnderstanding.test.js ../extension/test/privacy.test.js",
+    "migrate": "node src/migrate.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "chart.js": "^4.4.8"
+  }
+}

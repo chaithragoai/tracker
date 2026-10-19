@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  User-approved Login Item alternative via launchd (LaunchAgents).
+  Install (you must approve in System Settings if prompted):
+
+    mkdir -p ~/Library/LaunchAgents
+    # Edit the paths below to match this machine, then:
+    cp packaging/launchd/com.macactivitytracker.server.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.macactivitytracker.server.plist
+
+  Unload:
+    launchctl unload ~/Library/LaunchAgents/com.macactivitytracker.server.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.macactivitytracker.server</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/env</string>
+    <string>node</string>
+    <string>REPLACE_WITH_PROJECT_ROOT/server/src/index.js</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>REPLACE_WITH_PROJECT_ROOT/server</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/tmp/macactivitytracker-server.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/macactivitytracker-server.err</string>
+</dict>
+</plist>

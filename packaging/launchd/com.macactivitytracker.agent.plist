@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Background mac-agent at login (user-approved LaunchAgent).
+
+    scripts/install-launchagents.sh agent
+
+  KeepAlive restarts the process if it exits. Do not pass --run-seconds here
+  (that flag is for short automated tests and would exit on purpose).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.macactivitytracker.agent</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>REPLACE_WITH_PROJECT_ROOT/mac-agent/.build/release/MacActivityAgent</string>
+    <string>--quiet</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>5</integer>
+  <key>StandardOutPath</key>
+  <string>/tmp/macactivitytracker-agent.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/macactivitytracker-agent.err</string>
+</dict>
+</plist>

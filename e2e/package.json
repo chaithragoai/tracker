@@ -1,0 +1,14 @@
+{
+  "name": "activity-tracker-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --project=chromium",
+    "report": "playwright show-report ../test-results/playwright-html"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}

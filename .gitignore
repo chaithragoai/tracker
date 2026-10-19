@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.npm-cache/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.*
+*credentials*.json
+*device-credentials*
+*.secret
+secrets/
+
+# Local databases and personal activity data (never publish)
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+
+# Build / tooling output
+mac-agent/.build/
+dist/
+build/
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+e2e/test-results/
+.turbo/
+.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+tmp/
+temp/
+.tmpdir/

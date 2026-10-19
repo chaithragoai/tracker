@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Mac Activity Tracker",
+  "version": "0.1.0",
+  "description": "Tracks browser tabs and detectable page operations for the local Mac Activity Tracker.",
+  "permissions": ["tabs", "storage", "alarms", "downloads", "webNavigation"],
+  "host_permissions": ["http://127.0.0.1:8787/*", "http://localhost:8787/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Mac Activity Tracker",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "optional_host_permissions": ["<all_urls>"]
+}
